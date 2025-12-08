@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* App base styles */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-white text-gray-800 dark:bg-gray-950 dark:text-gray-100 antialiased;
+}
+
+/* Reusable utilities */
+.container-responsive {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.btn-primary {
+  @apply inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-white shadow hover:brightness-105 active:brightness-95 transition;
+}
+
+.card {
+  @apply rounded-xl border border-gray-200/60 dark:border-gray-800/60 bg-white/60 dark:bg-gray-900/60 backdrop-blur p-6 shadow-sm;
+}
