@@ -1,49 +1,91 @@
-import { Route, Routes, NavLink } from 'react-router-dom'
-import Home from './pages/Home'
-import LoginDemo from './pages/LoginDemo'
-import Overview from './pages/Overview'
-import Diagrams from './pages/Diagrams'
-
-function NavBar() {
-  const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `px-3 py-2 rounded-md text-sm font-medium ${
-      isActive
-        ? 'bg-primary text-white'
-        : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-    }`
-  return (
-    <header className="sticky top-0 z-40 border-b border-gray-200/60 dark:border-gray-800/60 bg-white/70 dark:bg-gray-950/70 backdrop-blur">
-      <div className="container-responsive flex items-center justify-between h-14">
-        <div className="flex items-center gap-2 font-semibold">
-          <span className="h-2 w-2 rounded-full bg-primary" />
-          <span>SSO Demo</span>
-        </div>
-        <nav className="flex items-center gap-1">
-          <NavLink to="/" className={linkClass} end>Home</NavLink>
-          <NavLink to="/overview" className={linkClass}>Overview</NavLink>
-          <NavLink to="/diagrams" className={linkClass}>Diagrams</NavLink>
-          <NavLink to="/login-demo" className={linkClass}>Login Demo</NavLink>
-        </nav>
-      </div>
-    </header>
-  )
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useRef, useState } from "react";
+import Section from "./components/Section";
+import Sidebar from "./components/Sidebar";
+import ProgressBar from "./components/ProgressBar";
+import Parallax from "./components/Parallax";
+import sections from "./content/sections";
 
 export default function App() {
+  const sectionRefs = useRef([]);
+  const containerRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Intersection Observer to set active section
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = Number(entry.target.dataset.index);
+            setActiveIndex(idx);
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+
+    sectionRefs.current.forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const onKey = (e) => {
+      const sectionsEls = sectionRefs.current;
+      const current = activeIndex;
+
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
+        e.preventDefault();
+        const next = sectionsEls[current + 1];
+        if (next) next.scrollIntoView({ behavior: "smooth" });
+      }
+
+      if (e.key === "ArrowUp" || e.key === "PageUp") {
+        e.preventDefault();
+        const prev = sectionsEls[current - 1];
+        if (prev) prev.scrollIntoView({ behavior: "smooth" });
+      }
+
+      if (e.key === "Home") {
+        e.preventDefault();
+        if (sectionsEls[0]) {
+          sectionsEls[0].scrollIntoView({ behavior: "smooth" });
+        }
+      }
+
+      if (e.key === "End") {
+        e.preventDefault();
+        const last = sectionsEls[sectionsEls.length - 1];
+        if (last) last.scrollIntoView({ behavior: "smooth" });
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeIndex]);
+
   return (
-    <div className="min-h-dvh flex flex-col">
-      <NavBar />
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/overview" element={<Overview />} />
-          <Route path="/diagrams" element={<Diagrams />} />
-          <Route path="/login-demo" element={<LoginDemo />} />
-        </Routes>
+    <div
+      ref={containerRef}
+      className="w-full min-h-screen bg-gray-950 text-white relative snap-y snap-mandatory h-screen overflow-y-scroll scroll-smooth"
+    >
+      <ProgressBar />
+      <Sidebar sections={sections} activeIndex={activeIndex} />
+      <Parallax />
+
+      <main className="relative z-10">
+        {sections.map((sec, i) => (
+          <Section
+            key={i}
+            title={sec.title}
+            content={sec.content}
+            Component={sec.component}
+            innerRef={(el: any) => (sectionRefs.current[i] = el)}
+            index={i}
+          />
+        ))}
       </main>
-      <footer className="border-t border-gray-200/60 dark:border-gray-800/60 py-6 text-center text-sm text-gray-500">
-        <div className="container-responsive">© {new Date().getFullYear()} SSO Demo</div>
-      </footer>
     </div>
-  )
+  );
 }
